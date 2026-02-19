@@ -97,6 +97,8 @@ struct NumericInputRow: View {
     let range: ClosedRange<Double>?
     let step: Double
     @Binding var value: Double
+    @State private var isPadPresented = false
+    @State private var draftText = ""
 
     var body: some View {
         HStack(spacing: 10) {
@@ -107,11 +109,45 @@ struct NumericInputRow: View {
             Spacer(minLength: 8)
 
             HStack(spacing: 8) {
-                TextField("", value: $value, formatter: Formatters.numberInput)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 122)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.decimalPad)
+                Button {
+                    draftText = formattedNumber(value)
+                    isPadPresented = true
+                } label: {
+                    Text(formattedNumber(value))
+                        .font(.system(size: 15, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Theme.text)
+                        .frame(width: 122, alignment: .trailing)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(red: 0.84, green: 0.82, blue: 0.77), lineWidth: 1)
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+                .popover(
+                    isPresented: $isPadPresented,
+                    attachmentAnchor: .point(.trailing),
+                    arrowEdge: .leading
+                ) {
+                    NumericPadPopover(
+                        title: label,
+                        suffix: suffix,
+                        step: step,
+                        range: range,
+                        draftText: $draftText,
+                        onCancel: { isPadPresented = false },
+                        onApply: { nextValue in
+                            value = nextValue
+                            isPadPresented = false
+                        }
+                    )
+                    .presentationCompactAdaptation(.none)
+                }
 
                 Text(suffix)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
@@ -131,6 +167,190 @@ struct NumericInputRow: View {
                 value = sanitized
             }
         }
+    }
+
+    private func formattedNumber(_ number: Double) -> String {
+        Formatters.numberInput.string(from: NSNumber(value: number)) ?? "0"
+    }
+}
+
+private struct NumericPadPopover: View {
+    let title: String
+    let suffix: String
+    let step: Double
+    let range: ClosedRange<Double>?
+    @Binding var draftText: String
+    let onCancel: () -> Void
+    let onApply: (Double) -> Void
+
+    private let gridColumns = [
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8),
+        GridItem(.flexible(), spacing: 8)
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(Theme.text)
+
+            HStack(spacing: 8) {
+                Text(displayValue)
+                    .font(.system(size: 22, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 8)
+                Text(suffix)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.muted)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(red: 0.988, green: 0.98, blue: 0.957))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(red: 0.87, green: 0.84, blue: 0.78), lineWidth: 1)
+                    )
+            )
+
+            HStack(spacing: 8) {
+                NumericPadButton(label: "-\(stepText)") {
+                    applyDelta(-step)
+                }
+                NumericPadButton(label: "+\(stepText)") {
+                    applyDelta(step)
+                }
+                NumericPadButton(label: "+/-") {
+                    toggleSign()
+                }
+            }
+
+            LazyVGrid(columns: gridColumns, spacing: 8) {
+                ForEach(["7", "8", "9", "4", "5", "6", "1", "2", "3", ".", "0", "Del"], id: \.self) { key in
+                    NumericPadButton(label: key) {
+                        handleKey(key)
+                    }
+                }
+            }
+
+            HStack(spacing: 8) {
+                NumericPadButton(label: "Cancel") {
+                    onCancel()
+                }
+                NumericPadButton(label: "Clear", accent: true) {
+                    draftText = ""
+                }
+                NumericPadButton(label: "Done", accent: true) {
+                    applyDraftValue()
+                }
+            }
+        }
+        .padding(12)
+        .frame(width: 258)
+    }
+
+    private var displayValue: String {
+        draftText.isEmpty ? "0" : draftText
+    }
+
+    private var stepText: String {
+        Formatters.numberInput.string(from: NSNumber(value: step)) ?? "1"
+    }
+
+    private func applyDelta(_ delta: Double) {
+        let base = Double(draftText) ?? 0
+        setDraft(base + delta)
+    }
+
+    private func toggleSign() {
+        if draftText.hasPrefix("-") {
+            draftText.removeFirst()
+        } else if !(range?.lowerBound ?? -Double.infinity >= 0) {
+            draftText = draftText.isEmpty ? "-" : "-" + draftText
+        }
+    }
+
+    private func handleKey(_ key: String) {
+        switch key {
+        case "Del":
+            if !draftText.isEmpty {
+                draftText.removeLast()
+            }
+        case ".":
+            if draftText.isEmpty {
+                draftText = "0."
+            } else if !draftText.contains(".") && draftText != "-" {
+                draftText.append(".")
+            }
+        default:
+            guard key.allSatisfy(\.isNumber) else { return }
+            if draftText == "0" {
+                draftText = key
+            } else if draftText == "-0" {
+                draftText = "-" + key
+            } else {
+                draftText.append(key)
+            }
+        }
+    }
+
+    private func applyDraftValue() {
+        var nextValue = Double(draftText) ?? 0
+        if !nextValue.isFinite {
+            nextValue = 0
+        }
+        if let range {
+            nextValue = max(min(nextValue, range.upperBound), range.lowerBound)
+        }
+        onApply(nextValue)
+    }
+
+    private func setDraft(_ rawValue: Double) {
+        var nextValue = rawValue
+        if let range {
+            nextValue = max(min(nextValue, range.upperBound), range.lowerBound)
+        }
+        draftText = Formatters.numberInput.string(from: NSNumber(value: nextValue)) ?? "0"
+    }
+}
+
+private struct NumericPadButton: View {
+    let label: String
+    let accent: Bool
+    let action: () -> Void
+
+    init(label: String, accent: Bool = false, action: @escaping () -> Void) {
+        self.label = label
+        self.accent = accent
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(accent ? Color.white : Theme.text)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(accent ? Theme.buy : Color.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(
+                                    accent
+                                        ? Theme.buy
+                                        : Color(red: 0.87, green: 0.84, blue: 0.78),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -218,15 +438,20 @@ struct MetricCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
-            if let detailText {
-                Text(detailText)
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
-                    .foregroundStyle(Theme.muted)
-                    .lineLimit(3)
+            Group {
+                if let detailText {
+                    Text(detailText)
+                        .font(.system(size: 11, weight: .regular, design: .rounded))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(3)
+                } else {
+                    Color.clear
+                }
             }
+            .frame(height: 38, alignment: .topLeading)
         }
         .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 132, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.8))
