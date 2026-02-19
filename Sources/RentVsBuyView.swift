@@ -70,6 +70,7 @@ struct RentVsBuyView: View {
     private var resultsPanel: some View {
         let summary = analysis.summary
         let assumptions = analysis.assumptions
+        let ownerMonthlyCostBreakdown = RentVsBuyCalculator.computeOwnerMonthlyCost(inputs)
 
         return VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 10) {
@@ -89,6 +90,11 @@ struct RentVsBuyView: View {
                     MetricCard(
                         title: "Estimated Mortgage Payment",
                         value: "\(Formatters.currency(assumptions.monthlyMortgagePayment))/mo"
+                    )
+                    MetricCard(
+                        title: "Total Monthly Owner Cost",
+                        value: "\(Formatters.currency(ownerMonthlyCostBreakdown.total))/mo",
+                        detailText: "Includes principal & interest + tax + insurance + HOA + maintenance. One-time costs excluded."
                     )
                 }
 

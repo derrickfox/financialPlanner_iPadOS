@@ -6,8 +6,8 @@ enum CalculatorMode: String, Codable {
 }
 
 struct RentVsBuyInputs: Codable, Equatable {
-    var years: Double = 10
-    var monthlyRent: Double = 2200
+    var years: Double = 30
+    var monthlyRent: Double = 3300
     var rentIncreasePct: Double = 3
     var rentersInsuranceMonthly: Double = 22
     var homePrice: Double = 500000

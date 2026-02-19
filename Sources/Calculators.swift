@@ -1,6 +1,51 @@
 import Foundation
 
+struct OwnerMonthlyCostBreakdown {
+    let principalInterestMonthly: Double
+    let propertyTaxMonthly: Double
+    let homeInsuranceMonthly: Double
+    let hoaMonthly: Double
+    let maintenanceMonthly: Double
+
+    var total: Double {
+        principalInterestMonthly
+            + propertyTaxMonthly
+            + homeInsuranceMonthly
+            + hoaMonthly
+            + maintenanceMonthly
+    }
+}
+
 enum RentVsBuyCalculator {
+    static func computeOwnerMonthlyCost(_ inputs: RentVsBuyInputs) -> OwnerMonthlyCostBreakdown {
+        let homePrice = max(inputs.homePrice, 0)
+        let downPaymentRate = clamp(inputs.downPaymentPct, min: 0, max: 100) / 100
+        let mortgageRatePct = max(inputs.mortgageRatePct, 0)
+        let loanTermYears = Int(clamp(round(inputs.loanTermYears), min: 1, max: 40))
+        let propertyTaxRate = max(inputs.propertyTaxPct, 0) / 100
+        let homeInsuranceAnnual = max(inputs.homeInsuranceAnnual, 0)
+        let hoaMonthly = max(inputs.hoaMonthly, 0)
+        let maintenanceRate = max(inputs.maintenancePct, 0) / 100
+
+        let mortgagePrincipal = homePrice * (1 - downPaymentRate)
+        let principalInterestMonthly = mortgagePayment(
+            principal: mortgagePrincipal,
+            annualRatePct: mortgageRatePct,
+            termYears: loanTermYears
+        )
+        let propertyTaxMonthly = (homePrice * propertyTaxRate) / 12
+        let homeInsuranceMonthly = homeInsuranceAnnual / 12
+        let maintenanceMonthly = (homePrice * maintenanceRate) / 12
+
+        return OwnerMonthlyCostBreakdown(
+            principalInterestMonthly: principalInterestMonthly,
+            propertyTaxMonthly: propertyTaxMonthly,
+            homeInsuranceMonthly: homeInsuranceMonthly,
+            hoaMonthly: hoaMonthly,
+            maintenanceMonthly: maintenanceMonthly
+        )
+    }
+
     static func compute(_ inputs: RentVsBuyInputs) -> RentVsBuyAnalysis {
         let years = Int(clamp(round(inputs.years), min: 1, max: 50))
         let monthlyRentStart = max(inputs.monthlyRent, 0)
@@ -20,14 +65,12 @@ enum RentVsBuyCalculator {
         let investmentReturnPct = inputs.investmentReturnPct
         let inflationPct = inputs.annualInflationPct
 
+        let ownerMonthlyCostBreakdown = computeOwnerMonthlyCost(inputs)
+
         let downPayment = homePrice * downPaymentRate
         let closingCosts = homePrice * closingCostRate
         let mortgagePrincipal = homePrice - downPayment
-        let monthlyMortgagePayment = mortgagePayment(
-            principal: mortgagePrincipal,
-            annualRatePct: mortgageRatePct,
-            termYears: loanTermYears
-        )
+        let monthlyMortgagePayment = ownerMonthlyCostBreakdown.principalInterestMonthly
         let mortgageMonths = loanTermYears * 12
         let monthlyMortgageRate = mortgageRatePct / 100 / 12
 

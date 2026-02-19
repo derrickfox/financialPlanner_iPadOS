@@ -196,11 +196,13 @@ struct MetricCard: View {
     let title: String
     let value: String
     let valueColor: Color?
+    let detailText: String?
 
-    init(title: String, value: String, valueColor: Color? = nil) {
+    init(title: String, value: String, valueColor: Color? = nil, detailText: String? = nil) {
         self.title = title
         self.value = value
         self.valueColor = valueColor
+        self.detailText = detailText
     }
 
     var body: some View {
@@ -215,6 +217,13 @@ struct MetricCard: View {
                 .foregroundStyle(valueColor ?? Theme.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+
+            if let detailText {
+                Text(detailText)
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(Theme.muted)
+                    .lineLimit(3)
+            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
