@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0F450CD11E9763A7BDE403B5 /* RentVsBuyNativeiPadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C42E9D2BBF4A512941C105F /* RentVsBuyNativeiPadApp.swift */; };
+		34280483D8A5FDED7CDC067D /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BDA7F345ECDC25FE8150448 /* Theme.swift */; };
+		36C8D12C255F4AD725D8228F /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3661E87F95998D7D5698C23C /* Persistence.swift */; };
+		3FA42D1A0BB077E4D311C19F /* RetirementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A81CDF8FD4741EBC00B4ED /* RetirementView.swift */; };
+		72A4A3D01824A397688B52D2 /* RentVsBuyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6375118276F9B2C395D3E4 /* RentVsBuyView.swift */; };
+		BB22418E5A7C4566EDA731A3 /* SharedViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D36343DA65259E03AF470D /* SharedViews.swift */; };
+		C68B3BE3ED15B8AB1E920338 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87CD225319A9DE015BA18D0 /* Models.swift */; };
+		D10E66A5C524A66DD4D48790 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8033B084BC517A8FE1AD532 /* RootView.swift */; };
+		FBC345FB374EBB876B270B4D /* Calculators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824C7E0D5A81E2032D74593F /* Calculators.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0B6375118276F9B2C395D3E4 /* RentVsBuyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RentVsBuyView.swift; sourceTree = "<group>"; };
+		3661E87F95998D7D5698C23C /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		44D36343DA65259E03AF470D /* SharedViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedViews.swift; sourceTree = "<group>"; };
+		4BDA7F345ECDC25FE8150448 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		59A81CDF8FD4741EBC00B4ED /* RetirementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetirementView.swift; sourceTree = "<group>"; };
+		5C42E9D2BBF4A512941C105F /* RentVsBuyNativeiPadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RentVsBuyNativeiPadApp.swift; sourceTree = "<group>"; };
+		824C7E0D5A81E2032D74593F /* Calculators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Calculators.swift; sourceTree = "<group>"; };
+		D8033B084BC517A8FE1AD532 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		D87CD225319A9DE015BA18D0 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		E0DE7A36DB700ABCD5412038 /* RentVsBuyNativeiPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RentVsBuyNativeiPad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3BA2EBE511CC68A109F3A1B7 = {
+			isa = PBXGroup;
+			children = (
+				823ED848D99AA553ED657C09 /* Sources */,
+				7FD54E11B23ADA78BAAEBF5E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7FD54E11B23ADA78BAAEBF5E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E0DE7A36DB700ABCD5412038 /* RentVsBuyNativeiPad.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		823ED848D99AA553ED657C09 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				824C7E0D5A81E2032D74593F /* Calculators.swift */,
+				D87CD225319A9DE015BA18D0 /* Models.swift */,
+				3661E87F95998D7D5698C23C /* Persistence.swift */,
+				5C42E9D2BBF4A512941C105F /* RentVsBuyNativeiPadApp.swift */,
+				0B6375118276F9B2C395D3E4 /* RentVsBuyView.swift */,
+				59A81CDF8FD4741EBC00B4ED /* RetirementView.swift */,
+				D8033B084BC517A8FE1AD532 /* RootView.swift */,
+				44D36343DA65259E03AF470D /* SharedViews.swift */,
+				4BDA7F345ECDC25FE8150448 /* Theme.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2086A47F80643748AA3ADE83 /* RentVsBuyNativeiPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4682E4D3F6FC33551B68A0EF /* Build configuration list for PBXNativeTarget "RentVsBuyNativeiPad" */;
+			buildPhases = (
+				3894CFEF22E8C839D4155909 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RentVsBuyNativeiPad;
+			packageProductDependencies = (
+			);
+			productName = RentVsBuyNativeiPad;
+			productReference = E0DE7A36DB700ABCD5412038 /* RentVsBuyNativeiPad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		39F381A2ED69F856D0D9AF0F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = EB1A3BFC1B97371D8FDFCAAB /* Build configuration list for PBXProject "RentVsBuyNativeiPad" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3BA2EBE511CC68A109F3A1B7;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2086A47F80643748AA3ADE83 /* RentVsBuyNativeiPad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3894CFEF22E8C839D4155909 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBC345FB374EBB876B270B4D /* Calculators.swift in Sources */,
+				C68B3BE3ED15B8AB1E920338 /* Models.swift in Sources */,
+				36C8D12C255F4AD725D8228F /* Persistence.swift in Sources */,
+				0F450CD11E9763A7BDE403B5 /* RentVsBuyNativeiPadApp.swift in Sources */,
+				72A4A3D01824A397688B52D2 /* RentVsBuyView.swift in Sources */,
+				3FA42D1A0BB077E4D311C19F /* RetirementView.swift in Sources */,
+				D10E66A5C524A66DD4D48790 /* RootView.swift in Sources */,
+				BB22418E5A7C4566EDA731A3 /* SharedViews.swift in Sources */,
+				34280483D8A5FDED7CDC067D /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6A430BBCFA6D7911313BFE9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4G2L74757V;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.derrickfox.rentvsbuynativeipad;
+				PRODUCT_NAME = RentVsBuyNativeiPad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		82CE3838E8A4BFFC01D65876 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		83DA1926FD4B5D240D6FBD5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		97C2B893298099C5BB7E4491 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 4G2L74757V;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.derrickfox.rentvsbuynativeipad;
+				PRODUCT_NAME = RentVsBuyNativeiPad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4682E4D3F6FC33551B68A0EF /* Build configuration list for PBXNativeTarget "RentVsBuyNativeiPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A430BBCFA6D7911313BFE9A /* Debug */,
+				97C2B893298099C5BB7E4491 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EB1A3BFC1B97371D8FDFCAAB /* Build configuration list for PBXProject "RentVsBuyNativeiPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83DA1926FD4B5D240D6FBD5C /* Debug */,
+				82CE3838E8A4BFFC01D65876 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 39F381A2ED69F856D0D9AF0F /* Project object */;
+}
