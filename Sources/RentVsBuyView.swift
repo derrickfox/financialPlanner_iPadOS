@@ -268,6 +268,7 @@ struct RentVsBuyView: View {
         case .homeInsuranceAnnual: return $inputs.homeInsuranceAnnual
         case .maintenancePct: return $inputs.maintenancePct
         case .hoaMonthly: return $inputs.hoaMonthly
+        case .pmiRatePct: return $inputs.pmiRatePct
         case .closingCostPct: return $inputs.closingCostPct
         case .sellingCostPct: return $inputs.sellingCostPct
         case .homeAppreciationPct: return $inputs.homeAppreciationPct

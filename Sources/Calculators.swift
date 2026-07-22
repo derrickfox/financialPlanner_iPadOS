@@ -1,11 +1,22 @@
 import Foundation
 
+// AI_CHANGE:
+// Tool: Claude Code
+// Model: Claude Opus 4.8
+// Timestamp: 2026-07-22T00:00:00-04:00
+// Purpose: Ports the correctness fixes made to the RentVsBuy web app (REPOS/RentVsBuy,
+//          commits f689148 and 3efa1e3) into this native port, which duplicated the same
+//          model line for line and therefore reproduced all of its defects.
+// Reason: This app shipped the same accounting asymmetry, unbounded portfolio drawdown,
+//         appreciation off-by-one, retirement debt spiral and missing PMI. See the web repo's
+//         src/lib/*.test.js for the suite that pins each of these.
 struct OwnerMonthlyCostBreakdown {
     let principalInterestMonthly: Double
     let propertyTaxMonthly: Double
     let homeInsuranceMonthly: Double
     let hoaMonthly: Double
     let maintenanceMonthly: Double
+    let pmiMonthly: Double
 
     var total: Double {
         principalInterestMonthly
@@ -13,7 +24,20 @@ struct OwnerMonthlyCostBreakdown {
             + homeInsuranceMonthly
             + hoaMonthly
             + maintenanceMonthly
+            + pmiMonthly
     }
+}
+
+/// Private mortgage insurance is charged until the loan amortizes below this share of the
+/// original purchase price — keyed to the purchase price, not the appreciated value, which is
+/// how lenders actually drop it.
+let pmiCancellationLTV = 0.8
+
+func monthlyPmi(loanBalance: Double, homePrice: Double, pmiRatePct: Double, originalLoanAmount: Double) -> Double {
+    guard homePrice > 0, loanBalance > 0 else { return 0 }
+    guard loanBalance > homePrice * pmiCancellationLTV else { return 0 }
+
+    return (originalLoanAmount * max(pmiRatePct, 0) / 100) / 12
 }
 
 enum RentVsBuyCalculator {
@@ -26,6 +50,7 @@ enum RentVsBuyCalculator {
         let homeInsuranceAnnual = max(inputs.homeInsuranceAnnual, 0)
         let hoaMonthly = max(inputs.hoaMonthly, 0)
         let maintenanceRate = max(inputs.maintenancePct, 0) / 100
+        let pmiRatePct = max(inputs.pmiRatePct, 0)
 
         let mortgagePrincipal = homePrice * (1 - downPaymentRate)
         let principalInterestMonthly = mortgagePayment(
@@ -42,7 +67,13 @@ enum RentVsBuyCalculator {
             propertyTaxMonthly: propertyTaxMonthly,
             homeInsuranceMonthly: homeInsuranceMonthly,
             hoaMonthly: hoaMonthly,
-            maintenanceMonthly: maintenanceMonthly
+            maintenanceMonthly: maintenanceMonthly,
+            pmiMonthly: monthlyPmi(
+                loanBalance: mortgagePrincipal,
+                homePrice: homePrice,
+                pmiRatePct: pmiRatePct,
+                originalLoanAmount: mortgagePrincipal
+            )
         )
     }
 
@@ -58,6 +89,7 @@ enum RentVsBuyCalculator {
         let propertyTaxRate = max(inputs.propertyTaxPct, 0) / 100
         let homeInsuranceAnnualStart = max(inputs.homeInsuranceAnnual, 0)
         let maintenanceRate = max(inputs.maintenancePct, 0) / 100
+        let pmiRatePct = max(inputs.pmiRatePct, 0)
         let hoaStart = max(inputs.hoaMonthly, 0)
         let closingCostRate = max(inputs.closingCostPct, 0) / 100
         let sellingCostRate = clamp(inputs.sellingCostPct, min: 0, max: 100) / 100
@@ -87,7 +119,10 @@ enum RentVsBuyCalculator {
         var remainingBalance = mortgagePrincipal
 
         var ownerOutflow = downPayment + closingCosts
-        var renterOutflow = 0.0
+        // The renter diverts the same up-front cash into the market rather than into a house,
+        // so it counts as outflow for them too.
+        var renterOutflow = downPayment + closingCosts
+        var renterRentPaid = 0.0
         var renterInvestment = downPayment + closingCosts
 
         var timeline: [RentVsBuyPoint] = []
@@ -99,10 +134,18 @@ enum RentVsBuyCalculator {
                 rentersInsurance *= (1 + monthlyInflation)
                 homeInsurance *= (1 + monthlyInflation)
                 hoa *= (1 + monthlyInflation)
-                homeValue *= (1 + monthlyHomeGrowth)
             }
 
+            // The home starts appreciating immediately, unlike the recurring costs which
+            // begin at today's amount. Sharing the guard left every year-N snapshot one month
+            // short of N years of growth.
+            homeValue *= (1 + monthlyHomeGrowth)
+
             renterInvestment *= (1 + monthlyInvestmentGrowth)
+
+            // Captured before this month's principal payment: the PMI premium falls due
+            // alongside the payment, so it is assessed on the opening balance.
+            let openingBalance = remainingBalance
 
             var mortgagePaymentThisMonth = 0.0
             if month <= mortgageMonths, remainingBalance > 0.01 {
@@ -120,17 +163,38 @@ enum RentVsBuyCalculator {
             let propertyTaxThisMonth = (homeValue * propertyTaxRate) / 12
             let maintenanceThisMonth = (homeValue * maintenanceRate) / 12
 
+            let pmiThisMonth = monthlyPmi(
+                loanBalance: openingBalance,
+                homePrice: homePrice,
+                pmiRatePct: pmiRatePct,
+                originalLoanAmount: mortgagePrincipal
+            )
+
             let ownerMonthlyCost = mortgagePaymentThisMonth
                 + propertyTaxThisMonth
                 + maintenanceThisMonth
                 + homeInsurance
                 + hoa
+                + pmiThisMonth
             let renterMonthlyCost = rent + rentersInsurance
 
             ownerOutflow += ownerMonthlyCost
-            renterOutflow += renterMonthlyCost
+            renterRentPaid += renterMonthlyCost
 
-            renterInvestment += ownerMonthlyCost - renterMonthlyCost
+            // Portfolio contributions are cash the renter commits, so they belong in the
+            // outflow both scenarios are compared on. Draws are capped at the balance, so an
+            // exhausted portfolio forces out-of-pocket spending rather than margin debt.
+            let renterContribution = ownerMonthlyCost - renterMonthlyCost
+
+            if renterContribution >= 0 {
+                renterInvestment += renterContribution
+                renterOutflow += renterMonthlyCost + renterContribution
+            } else {
+                let shortfall = -renterContribution
+                let fundedFromPortfolio = Swift.min(renterInvestment, shortfall)
+                renterInvestment -= fundedFromPortfolio
+                renterOutflow += renterMonthlyCost - fundedFromPortfolio
+            }
 
             let ownerEquity = homeValue * (1 - sellingCostRate) - remainingBalance
             let ownerNetCost = ownerOutflow - ownerEquity
@@ -148,6 +212,7 @@ enum RentVsBuyCalculator {
                         renterNetCost: renterNetCost,
                         ownerOutflow: ownerOutflow,
                         renterOutflow: renterOutflow,
+                        renterRentPaid: renterRentPaid,
                         ownerEquity: ownerEquity,
                         renterInvestment: renterInvestment
                     )
@@ -161,6 +226,7 @@ enum RentVsBuyCalculator {
             renterNetCost: 0,
             ownerOutflow: 0,
             renterOutflow: 0,
+            renterRentPaid: 0,
             ownerEquity: 0,
             renterInvestment: 0
         )
@@ -189,6 +255,7 @@ enum RentVsBuyCalculator {
                 renterNetCost: finalYear.renterNetCost,
                 ownerOutflow: finalYear.ownerOutflow,
                 renterOutflow: finalYear.renterOutflow,
+                renterRentPaid: finalYear.renterRentPaid,
                 ownerEquity: finalYear.ownerEquity,
                 renterInvestment: finalYear.renterInvestment
             )
@@ -202,7 +269,19 @@ enum RetirementCalculator {
         let today: Double
     }
 
-    static func compute(_ inputs: RetirementInputs) -> RetirementAnalysis {
+    private struct Projection {
+        let timeline: [RetirementPoint]
+        let runOutAge: Int?
+        let balanceAtRetirement: Double
+        let cumulativeContributions: Double
+        let cumulativeWithdrawals: Double
+        let finalBalance: Double
+    }
+
+    /// Runs one full projection from today through life expectancy. `spendingMultiplier` scales
+    /// the planned retirement budget, which is what lets the sustainability solver ask "what if
+    /// this household spent 80% of its plan?" without duplicating the projection logic.
+    private static func project(_ inputs: RetirementInputs, spendingMultiplier: Double) -> Projection {
         let currentAge = Int(clamp(round(inputs.currentAge), min: 18, max: 90))
         let retirementAgeInput = Int(clamp(round(inputs.retirementAge), min: 40, max: 95))
         let retirementAge = max(retirementAgeInput, currentAge + 1)
@@ -233,7 +312,6 @@ enum RetirementCalculator {
         let pensionStart = max(inputs.pensionAnnual, 0)
         let benefitIncreasePct = inputs.benefitIncreasePct
         let retirementIncomeTaxRate = clamp(inputs.retirementIncomeTaxPct, min: 0, max: 95) / 100
-        let safeWithdrawalRate = clamp(inputs.safeWithdrawalRatePct, min: 0.5, max: 15) / 100
 
         let yearsToRetirement = retirementAge - currentAge
         let yearsTotal = lifeExpectancy - currentAge
@@ -266,17 +344,26 @@ enum RetirementCalculator {
         var socialSecurity = socialSecurityStart
         var pension = pensionStart
 
-        let firstYearRetirementSpending = annualSpendingToday * inflationToRetirement
+        // AI_CHANGE:
+        // Tool: Claude Code
+        // Model: Claude Opus 4.8
+        // Timestamp: 2026-07-22T00:00:00-04:00
+        // Purpose: Runs the projection at a scalable spending level so sustainable spending can
+        //          be solved against the simulation instead of a static withdrawal formula, and
+        //          caps withdrawals at the remaining balance.
+        // Reason: Ported from REPOS/RentVsBuy. Previously the balance went negative and kept
+        //         compounding at the post-retirement return (reaching -$9.3M from a $10k start),
+        //         and "sustainable spend" was a first-year safe-withdrawal estimate that ignored
+        //         the user's own inflation, COLA and return assumptions.
+        let firstYearRetirementSpending = annualSpendingToday * inflationToRetirement * spendingMultiplier
         var retirementSpending = firstYearRetirementSpending
 
         var cumulativeContributions = 0.0
         var cumulativeWithdrawals = 0.0
         var runOutAge: Int?
 
-        let firstYearNetGap = max(firstYearRetirementSpending - socialSecurity - pension, 0)
-        let firstYearGrossWithdrawalNeed = firstYearNetGap / max(1 - retirementIncomeTaxRate, 0.01)
-        let requiredNestEgg = firstYearGrossWithdrawalNeed / safeWithdrawalRate
-
+        // The withdrawal-rule target is derived once in compute(), not here — this function
+        // runs many times during the sustainability solve and only reports the projection.
         var timeline: [RetirementPoint] = []
         var balanceAtRetirement = currentSavings
 
@@ -309,9 +396,12 @@ enum RetirementCalculator {
                 incomeThisYear = socialSecurity + pension
 
                 let shortfall = spendingThisYear - incomeThisYear
+                var unfundedThisYear = 0.0
                 if shortfall > 0 {
-                    let grossWithdrawal = shortfall / max(1 - retirementIncomeTaxRate, 0.01)
+                    let needed = shortfall / max(1 - retirementIncomeTaxRate, 0.01)
+                    let grossWithdrawal = Swift.min(needed, Swift.max(balance, 0))
                     withdrawalThisYear = grossWithdrawal
+                    unfundedThisYear = needed - grossWithdrawal
                     balance -= grossWithdrawal
                     cumulativeWithdrawals += grossWithdrawal
                 } else if shortfall < 0 {
@@ -324,7 +414,9 @@ enum RetirementCalculator {
                 socialSecurity *= benefitsGrowth
                 pension *= benefitsGrowth
 
-                if runOutAge == nil, balance <= 0 {
+                // A plan that lands on exactly zero has funded every dollar of its spending, so
+                // failure is keyed to unmet need rather than the balance touching zero.
+                if runOutAge == nil, unfundedThisYear > 0 {
                     runOutAge = age
                 }
             }
@@ -342,17 +434,105 @@ enum RetirementCalculator {
             )
         }
 
-        let finalBalance = timeline.last?.balance ?? 0
-        let targetGap = requiredNestEgg - balanceAtRetirement
-        let retireReady = targetGap <= 0
+        return Projection(
+            timeline: timeline,
+            runOutAge: runOutAge,
+            balanceAtRetirement: balanceAtRetirement,
+            cumulativeContributions: cumulativeContributions,
+            cumulativeWithdrawals: cumulativeWithdrawals,
+            finalBalance: timeline.last?.balance ?? 0
+        )
+    }
+
+    // AI_CHANGE:
+    // Tool: Claude Code
+    // Model: Claude Opus 4.8
+    // Timestamp: 2026-07-22T00:00:00-04:00
+    // Purpose: Finds, by bisection, the largest fraction of the planned budget the portfolio can
+    //          fund every year through life expectancy.
+    // Reason: Ported from REPOS/RentVsBuy. "Sustainable spend" was balanceAtRetirement times the
+    //         safe withdrawal rate — a first-year estimate that ignored the user's inflation,
+    //         COLA and return inputs, so the reported cushion held for one year and no longer.
+    private static let sustainableSpendCeiling = 20.0
+    private static let sustainableSpendIterations = 48
+
+    private static func solveSustainableSpendingMultiplier(_ inputs: RetirementInputs) -> Double {
+        let plannedMonthly = max(inputs.monthlyHousing, 0)
+            + max(inputs.monthlyUtilities, 0)
+            + max(inputs.monthlyFood, 0)
+            + max(inputs.monthlyTransportation, 0)
+            + max(inputs.monthlyHealthcare, 0)
+            + max(inputs.monthlyLifestyle, 0)
+            + max(inputs.monthlyTravel, 0)
+            + max(inputs.monthlyOther, 0)
+            + max(inputs.annualNonMonthlyExpenses, 0) / 12
+
+        guard plannedMonthly > 0 else { return 0 }
+
+        if project(inputs, spendingMultiplier: sustainableSpendCeiling).runOutAge == nil {
+            return sustainableSpendCeiling
+        }
+
+        var affordable = 0.0
+        var unaffordable = sustainableSpendCeiling
+
+        for _ in 0..<sustainableSpendIterations {
+            let midpoint = (affordable + unaffordable) / 2
+            if project(inputs, spendingMultiplier: midpoint).runOutAge == nil {
+                affordable = midpoint
+            } else {
+                unaffordable = midpoint
+            }
+        }
+
+        return affordable
+    }
+
+    static func compute(_ inputs: RetirementInputs) -> RetirementAnalysis {
+        let currentAge = Int(clamp(round(inputs.currentAge), min: 18, max: 90))
+        let retirementAgeInput = Int(clamp(round(inputs.retirementAge), min: 40, max: 95))
+        let retirementAge = max(retirementAgeInput, currentAge + 1)
+        let lifeExpectancyInput = Int(clamp(round(inputs.lifeExpectancy), min: 55, max: 110))
+        let lifeExpectancy = max(lifeExpectancyInput, retirementAge + 1)
+
+        let socialSecurityStart = max(inputs.socialSecurityAnnual, 0)
+        let pensionStart = max(inputs.pensionAnnual, 0)
+        let retirementIncomeTaxRate = clamp(inputs.retirementIncomeTaxPct, min: 0, max: 95) / 100
+        let safeWithdrawalRate = clamp(inputs.safeWithdrawalRatePct, min: 0.5, max: 15) / 100
+
+        let yearsToRetirement = retirementAge - currentAge
+        let inflationToRetirement = pow(annualRateMultiplier(inputs.inflationPct), Double(yearsToRetirement))
+
+        let expenseRows: [MonthlyExpenseRow] = [
+            MonthlyExpenseRow(label: "Housing", today: max(inputs.monthlyHousing, 0)),
+            MonthlyExpenseRow(label: "Utilities", today: max(inputs.monthlyUtilities, 0)),
+            MonthlyExpenseRow(label: "Food & Groceries", today: max(inputs.monthlyFood, 0)),
+            MonthlyExpenseRow(label: "Transportation", today: max(inputs.monthlyTransportation, 0)),
+            MonthlyExpenseRow(label: "Healthcare", today: max(inputs.monthlyHealthcare, 0)),
+            MonthlyExpenseRow(label: "Lifestyle", today: max(inputs.monthlyLifestyle, 0)),
+            MonthlyExpenseRow(label: "Travel", today: max(inputs.monthlyTravel, 0)),
+            MonthlyExpenseRow(label: "Other", today: max(inputs.monthlyOther, 0)),
+            MonthlyExpenseRow(label: "Non-Monthly Costs (Avg)", today: max(inputs.annualNonMonthlyExpenses, 0) / 12)
+        ]
+        let plannedMonthlySpendToday = expenseRows.reduce(0) { $0 + $1.today }
+        let annualSpendingToday = plannedMonthlySpendToday * 12
+
+        let planned = project(inputs, spendingMultiplier: 1)
+
+        let firstYearRetirementSpending = annualSpendingToday * inflationToRetirement
+        let firstYearNetGap = max(firstYearRetirementSpending - socialSecurityStart - pensionStart, 0)
+        let firstYearGrossWithdrawalNeed = firstYearNetGap / max(1 - retirementIncomeTaxRate, 0.01)
+        let requiredNestEgg = firstYearGrossWithdrawalNeed / safeWithdrawalRate
+
+        let targetGap = requiredNestEgg - planned.balanceAtRetirement
+        let meetsWithdrawalRuleTarget = targetGap <= 0
+        let retireReady = planned.runOutAge == nil
 
         let plannedMonthlySpendAtRetirement = firstYearRetirementSpending / 12
-        let sustainableGrossWithdrawal = balanceAtRetirement * safeWithdrawalRate
-        let sustainableNetPortfolioSpend = sustainableGrossWithdrawal * (1 - retirementIncomeTaxRate)
-        let sustainableAnnualSpend = socialSecurityStart + pensionStart + sustainableNetPortfolioSpend
-        let sustainableMonthlySpend = sustainableAnnualSpend / 12
+        let sustainableMultiplier = solveSustainableSpendingMultiplier(inputs)
+        let sustainableMonthlySpend = plannedMonthlySpendToday * inflationToRetirement * sustainableMultiplier
+        let sustainableAnnualSpend = sustainableMonthlySpend * 12
         let monthlyBudgetDelta = sustainableMonthlySpend - plannedMonthlySpendAtRetirement
-        let monthlyGapAtRetirement = firstYearNetGap / 12
 
         let monthlyBudgetRows = expenseRows.map { row in
             MonthlyBudgetRow(
@@ -370,29 +550,33 @@ enum RetirementCalculator {
                 yearsToRetirement: yearsToRetirement,
                 safeWithdrawalRate: safeWithdrawalRate
             ),
-            timeline: timeline,
+            timeline: planned.timeline,
             summary: RetirementSummary(
-                balanceAtRetirement: balanceAtRetirement,
+                balanceAtRetirement: planned.balanceAtRetirement,
                 requiredNestEgg: requiredNestEgg,
-                finalBalance: finalBalance,
+                finalBalance: planned.finalBalance,
                 targetGap: targetGap,
                 retireReady: retireReady,
-                runOutAge: runOutAge,
-                cumulativeContributions: cumulativeContributions,
-                cumulativeWithdrawals: cumulativeWithdrawals,
-                monthlyGapAtRetirement: monthlyGapAtRetirement,
+                meetsWithdrawalRuleTarget: meetsWithdrawalRuleTarget,
+                runOutAge: planned.runOutAge,
+                cumulativeContributions: planned.cumulativeContributions,
+                cumulativeWithdrawals: planned.cumulativeWithdrawals,
                 firstYearGap: firstYearNetGap,
                 plannedMonthlySpendToday: plannedMonthlySpendToday,
                 plannedMonthlySpendAtRetirement: plannedMonthlySpendAtRetirement,
                 sustainableMonthlySpend: sustainableMonthlySpend,
                 sustainableAnnualSpend: sustainableAnnualSpend,
                 monthlyBudgetDelta: monthlyBudgetDelta,
+                sustainableMultiplier: sustainableMultiplier,
                 monthlyBudgetRows: monthlyBudgetRows,
-                annualSpendingToday: annualSpendingToday
+                annualSpendingToday: annualSpendingToday,
+                balanceAtRetirementToday: planned.balanceAtRetirement / inflationToRetirement,
+                sustainableMonthlySpendToday: plannedMonthlySpendToday * sustainableMultiplier
             )
         )
     }
 }
+
 
 private func clamp(_ value: Double, min minimum: Double, max maximum: Double) -> Double {
     Swift.max(Swift.min(value, maximum), minimum)

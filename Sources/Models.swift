@@ -18,11 +18,14 @@ struct RentVsBuyInputs: Codable, Equatable {
     var homeInsuranceAnnual: Double = 1800
     var maintenancePct: Double = 1
     var hoaMonthly: Double = 150
+    // Annual PMI premium as a percentage of the original loan amount. Charged only while the
+    // balance is above 80% of the purchase price, so the 20%-down default pays none.
+    var pmiRatePct: Double = 0.5
     var closingCostPct: Double = 3
     var sellingCostPct: Double = 6
     var homeAppreciationPct: Double = 3
-    var investmentReturnPct: Double = 5
-    var annualInflationPct: Double = 2
+    var investmentReturnPct: Double = 7
+    var annualInflationPct: Double = 2.5
 }
 
 struct RetirementInputs: Codable, Equatable {
@@ -68,6 +71,7 @@ enum RentVsBuyFieldKey: String, Hashable {
     case homeInsuranceAnnual
     case maintenancePct
     case hoaMonthly
+    case pmiRatePct
     case closingCostPct
     case sellingCostPct
     case homeAppreciationPct
@@ -162,6 +166,7 @@ let rentVsBuyFieldGroups: [FieldGroup<RentVsBuyFieldKey>] = [
             FieldDescriptor(key: .homeInsuranceAnnual, label: "Home Insurance", suffix: "$/yr", range: 0...50000, step: 100),
             FieldDescriptor(key: .maintenancePct, label: "Maintenance", suffix: "%/yr", range: 0...10, step: 0.1),
             FieldDescriptor(key: .hoaMonthly, label: "HOA Fees", suffix: "$/mo", range: 0...5000, step: 25),
+            FieldDescriptor(key: .pmiRatePct, label: "PMI Rate", suffix: "%/yr", range: 0...5, step: 0.05),
             FieldDescriptor(key: .closingCostPct, label: "Closing Costs", suffix: "% of price", range: 0...15, step: 0.25),
             FieldDescriptor(key: .sellingCostPct, label: "Selling Costs", suffix: "% of value", range: 0...15, step: 0.25),
             FieldDescriptor(key: .homeAppreciationPct, label: "Home Appreciation", suffix: "%/yr", range: -20...20, step: 0.1)
@@ -235,6 +240,7 @@ struct RentVsBuyPoint: Identifiable {
     let renterNetCost: Double
     let ownerOutflow: Double
     let renterOutflow: Double
+    let renterRentPaid: Double
     let ownerEquity: Double
     let renterInvestment: Double
 
@@ -249,6 +255,7 @@ struct RentVsBuySummary {
     let renterNetCost: Double
     let ownerOutflow: Double
     let renterOutflow: Double
+    let renterRentPaid: Double
     let ownerEquity: Double
     let renterInvestment: Double
 }
@@ -290,18 +297,21 @@ struct RetirementSummary {
     let finalBalance: Double
     let targetGap: Double
     let retireReady: Bool
+    let meetsWithdrawalRuleTarget: Bool
     let runOutAge: Int?
     let cumulativeContributions: Double
     let cumulativeWithdrawals: Double
-    let monthlyGapAtRetirement: Double
     let firstYearGap: Double
     let plannedMonthlySpendToday: Double
     let plannedMonthlySpendAtRetirement: Double
     let sustainableMonthlySpend: Double
     let sustainableAnnualSpend: Double
     let monthlyBudgetDelta: Double
+    let sustainableMultiplier: Double
     let monthlyBudgetRows: [MonthlyBudgetRow]
     let annualSpendingToday: Double
+    let balanceAtRetirementToday: Double
+    let sustainableMonthlySpendToday: Double
 }
 
 struct RetirementAssumptions {

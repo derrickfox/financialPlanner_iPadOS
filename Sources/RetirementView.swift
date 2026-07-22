@@ -286,13 +286,25 @@ struct RetirementView: View {
         }
     }
 
+    // AI_CHANGE:
+    // Tool: Claude Code
+    // Model: Claude Opus 4.8
+    // Timestamp: 2026-07-22T00:00:00-04:00
+    // Purpose: Drives the verdict from the year-by-year projection and reports the static
+    //          withdrawal-rule comparison as a secondary note.
+    // Reason: Ported from REPOS/RentVsBuy. The verdict came from the 4% target while the
+    //         subline came from the simulation, so the screen could read "On track" directly
+    //         above "Portfolio depletes around age 92".
     private var outcomeMessage: String {
         let summary = analysis.summary
+        let lifeExpectancy = analysis.assumptions.lifeExpectancy
+
         if summary.retireReady {
-            return "On track: projected balance beats your withdrawal-rule target by \(Formatters.currency(abs(summary.targetGap))) at retirement."
+            return "On track: the projection funds your planned spending through age \(lifeExpectancy)."
         }
 
-        return "Gap to target: increase projected retirement assets by \(Formatters.currency(abs(summary.targetGap))) to meet your withdrawal-rule target."
+        let runOut = summary.runOutAge.map(String.init) ?? "\(lifeExpectancy)"
+        return "Short: the projection runs out at age \(runOut), before your planning horizon of \(lifeExpectancy)."
     }
 
     private func sublineMessage(lifeExpectancy: Int) -> String {
@@ -304,11 +316,16 @@ struct RetirementView: View {
             budgetMessage = "Estimated monthly shortfall at retirement: \(Formatters.currency(abs(summary.monthlyBudgetDelta)))."
         }
 
-        if let runOutAge = summary.runOutAge {
-            return "Portfolio depletes around age \(runOutAge). \(budgetMessage)"
+        _ = lifeExpectancy
+
+        let targetNote: String
+        if summary.meetsWithdrawalRuleTarget {
+            targetNote = "Your projected balance also clears the withdrawal-rule target by \(Formatters.currency(abs(summary.targetGap)))."
+        } else {
+            targetNote = "Your projected balance is \(Formatters.currency(abs(summary.targetGap))) short of the withdrawal-rule target."
         }
 
-        return "Portfolio remains funded through age \(lifeExpectancy). \(budgetMessage)"
+        return "\(targetNote) \(budgetMessage)"
     }
 
     private func isExpandedBinding(for id: String) -> Binding<Bool> {
